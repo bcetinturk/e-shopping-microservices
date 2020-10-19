@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: api-gateway
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8090/auth/realms/e-shopping
+            user-name-attribute: preferred_username
+        registration:
+          keycloak:
+            client-id: e-shopping-gateway
+            client-secret: f1272f8c-e377-4b73-acb2-36a3ea66d161 #TODO: hide in Vault in future
+  cloud:
+    gateway:
+      default-filters:
+        - TokenRelay
+
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 30
+        permittedNumberOfCallsInHalfOpenState: 10
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 60000
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        slowCallDurationThreshold: 2000
+        slowCallRateThreshold: 80
+        recordExceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+        ignoreExceptions:
+          - java.lang.IllegalStateException
+    instances:
+      serviceA:
+        baseConfig: default
+
+logging:
+  level:
+    org:
+      springframework:
+        cloud.gateway: DEBUG
+        http.server.reactive: DEBUG
+        web.reactive: DEBUG
